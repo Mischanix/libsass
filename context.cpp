@@ -228,11 +228,11 @@ namespace Sass {
     // Inspect inspect(this);
     // Output_Nested output_nested(*this);
 
-    root = root->perform(&expand)->block();
-    if (!extensions.empty()) {
-      Extend extend(*this, extensions, subset_map, &backtrace);
-      root->perform(&extend);
-    }
+    //root = root->perform(&expand)->block();
+    //if (!extensions.empty()) {
+    //  Extend extend(*this, extensions, subset_map, &backtrace);
+    //  root->perform(&extend);
+    //}
 
     Remove_Placeholders remove_placeholders(*this);
     root->perform(&remove_placeholders);

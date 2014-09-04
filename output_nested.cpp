@@ -32,6 +32,9 @@ namespace Sass {
     rendered_imports += insp.get_buffer();
   }
 
+  static bool hasPrintableChildren(Block* b);
+  static bool hasPrintableChildren(Statement* s);
+
   void Output_Nested::operator()(Block* b)
   {
     if (!b->is_root()) return;
@@ -41,7 +44,7 @@ namespace Sass {
       if (i < L-1 && old_len < buffer.length()) append_to_buffer("\n");
     }
   }
-
+  
   void Output_Nested::operator()(Ruleset* r)
   {
     Selector* s     = r->selector();
@@ -51,6 +54,9 @@ namespace Sass {
     Selector_List* sl = static_cast<Selector_List*>(s);
 
     if (sl->length() == 0) return;
+    
+    // don't print rulesets that don't have any printable children
+    if (!hasPrintableChildren(r)) return;
 
     if (b->has_non_hoistable()) {
       decls = true;
@@ -87,6 +93,12 @@ namespace Sass {
             if (all_invisible) bPrintExpression = false;
           }
         }
+        
+        // don't print @extends
+        if (typeid(*stm) == typeid(Extension)) {
+          bPrintExpression = false;
+        }
+        
         // Print if OK
         if (!stm->is_hoistable() && bPrintExpression) {
           if (!stm->block()) indent();
@@ -233,6 +245,29 @@ namespace Sass {
   {
     buffer += text;
     if (ctx) ctx->source_map.update_column(text);
+  }
+
+  static bool hasPrintableChildren(Statement* s) {
+    if (typeid((*s)) == typeid(Ruleset)) {
+      Ruleset* ruleset = (Ruleset*)s;
+      Block* block = ruleset->block();
+      return hasPrintableChildren(block);
+    }
+    return true;
+  }
+  
+  static bool hasPrintableChildren(Block* b) {
+    if (b != NULL) {
+      for (size_t i = 0, L = b->length(); i < L; ++i) {
+        if (typeid(*((*b)[i])) == typeid(Block)) {
+          return hasPrintableChildren((*b)[i]);
+        }
+        else if (typeid(*((*b)[i])) != typeid(Extension)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
 }
