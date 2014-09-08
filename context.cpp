@@ -228,7 +228,7 @@ namespace Sass {
     // Inspect inspect(this);
     // Output_Nested output_nested(*this);
 
-    //root = root->perform(&expand)->block();
+    root = root->perform(&expand)->block();
     //if (!extensions.empty()) {
     //  Extend extend(*this, extensions, subset_map, &backtrace);
     //  root->perform(&extend);
