@@ -10,7 +10,7 @@ namespace Sass {
 
   bool Compound_Selector::operator<(const Compound_Selector& rhs) const
   {
-    int i=0;
+    size_t i=0;
     while (i < max(this->length(), rhs.length())) {
       
       if (i >= this->length()) {
