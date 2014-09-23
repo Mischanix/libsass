@@ -10,17 +10,55 @@ namespace Sass {
 
   bool Compound_Selector::operator<(const Compound_Selector& rhs) const
   {
-    To_String to_string;
-    // ugly
-    return const_cast<Compound_Selector*>(this)->perform(&to_string) <
-           const_cast<Compound_Selector&>(rhs).perform(&to_string);
+    int i=0;
+    while (i < max(this->length(), rhs.length())) {
+      
+      if (i >= this->length()) {
+        // the rhs has more selectors
+        return true;
+      }
+      else if (i >= rhs.length()) {
+        // the lhs has more selectors
+        return false;
+      }
+      else if (*((*this)[i]) < *(rhs[i])) {
+        // compare the simple selectors at this position
+        return true;
+      }
+      else if (*(rhs[i]) < *((*this)[i])) {
+        // compare the simple selectors at this position
+        return false;
+      }
+      
+      i++;
+    }
+
+    return false;
   }
 
   bool Complex_Selector::operator<(const Complex_Selector& rhs) const
   {
-    To_String to_string;
-    return const_cast<Complex_Selector*>(this)->perform(&to_string) <
-           const_cast<Complex_Selector&>(rhs).perform(&to_string);
+    if (this->combinator() < rhs.combinator()) {
+      return true;
+    }
+    else if (rhs.combinator() < this->combinator()) {
+      return false;
+    }
+    else if (*(this->head()) < *(rhs.head())) {
+      return true;
+    }
+    else if (*(rhs.head()) < *(this->head())) {
+      return false;
+    }
+    else if (this->tail() && rhs.tail()) {
+      return (*(this->tail()) < *(rhs.tail()));
+    }
+    else if (!this->tail() && rhs.tail()) {
+      return true;
+    }
+    else {
+      return false;
+    }
   }
   
   bool Complex_Selector::operator==(const Complex_Selector& rhs) const {
@@ -77,14 +115,49 @@ namespace Sass {
   }
   
   bool Simple_Selector::operator<(const Simple_Selector& rhs) const {
-		// Use the string representation for ordering.
 
-  	// Cast away const here. To_String should take a const object, but it doesn't.
-  	Simple_Selector* pLHS = const_cast<Simple_Selector*>(this);
-    Simple_Selector* pRHS = const_cast<Simple_Selector*>(&rhs);
-    
-    To_String to_string;
-    return pLHS->perform(&to_string) < pRHS->perform(&to_string);
+    if (typeid(*this).name() < typeid(rhs).name()) {
+      return true;
+    }
+    else if (typeid(rhs).name() < typeid(*this).name()) {
+      return false;
+    }
+    else {
+      if (typeid(*this) == typeid(Selector_Schema)) {
+        // TODO: s->contents() ?
+      }
+      else if (typeid(*this) == typeid(Selector_Reference)) {
+        Selector* s1 = ((Selector_Reference*)(this))->selector();
+        Selector* s2 = ((Selector_Reference*)(&rhs))->selector();
+        return  s1 < s2;  // TODO: does this work?
+      }
+      else if (typeid(*this) == typeid(Selector_Placeholder)) {
+        return ((Selector_Placeholder*)this)->name() < ((Selector_Placeholder*)&rhs)->name();
+      }
+      else if (typeid(*this) == typeid(Type_Selector)) {
+        return ((Type_Selector*)this)->name() < ((Type_Selector*)&rhs)->name();
+      }
+      else if (typeid(*this) == typeid(Selector_Qualifier)) {
+        return ((Selector_Qualifier*)this)->name() < ((Selector_Qualifier*)&rhs)->name();
+      }
+      else if (typeid(*this) == typeid(Attribute_Selector)) {
+        return ((Attribute_Selector*)this)->name() < ((Attribute_Selector*)&rhs)->name();
+        // TODO: s->matcher() and s->value() ?
+      }
+      else if (typeid(*this) == typeid(Pseudo_Selector)) {
+        return ((Pseudo_Selector*)this)->name() < ((Pseudo_Selector*)&rhs)->name();
+        // TODO: s->expression() ?
+      }
+      else if (typeid(*this) == typeid(Wrapped_Selector)) {
+        return ((Wrapped_Selector*)this)->name() < ((Wrapped_Selector*)&rhs)->name();
+      }
+      
+      // TODO: if we can cover all possible selector types with the code above, then we can remove this fallback code
+      Simple_Selector* pLHS = const_cast<Simple_Selector*>(this);
+      Simple_Selector* pRHS = const_cast<Simple_Selector*>(&rhs);
+      To_String to_string;
+      return pLHS->perform(&to_string) < pRHS->perform(&to_string);
+    }
   }
 
   Compound_Selector* Simple_Selector::unify_with(Compound_Selector* rhs, Context& ctx)
