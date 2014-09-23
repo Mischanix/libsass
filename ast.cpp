@@ -44,10 +44,10 @@ namespace Sass {
     else if (rhs.combinator() < this->combinator()) {
       return false;
     }
-    else if (*(this->head()) < *(rhs.head())) {
+    else if (this->head() && rhs.head() && *(this->head()) < *(rhs.head())) {
       return true;
     }
-    else if (*(rhs.head()) < *(this->head())) {
+    else if (this->head() && rhs.head() && *(rhs.head()) < *(this->head())) {
       return false;
     }
     else if (this->tail() && rhs.tail()) {
