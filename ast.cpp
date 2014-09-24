@@ -123,15 +123,7 @@ namespace Sass {
       return false;
     }
     else {
-      if (typeid(*this) == typeid(Selector_Schema)) {
-        // TODO: s->contents() ?
-      }
-      else if (typeid(*this) == typeid(Selector_Reference)) {
-        Selector* s1 = ((Selector_Reference*)(this))->selector();
-        Selector* s2 = ((Selector_Reference*)(&rhs))->selector();
-        return  s1 < s2;  // TODO: does this work?
-      }
-      else if (typeid(*this) == typeid(Selector_Placeholder)) {
+      if (typeid(*this) == typeid(Selector_Placeholder)) {
         return ((Selector_Placeholder*)this)->name() < ((Selector_Placeholder*)&rhs)->name();
       }
       else if (typeid(*this) == typeid(Type_Selector)) {
@@ -141,16 +133,58 @@ namespace Sass {
         return ((Selector_Qualifier*)this)->name() < ((Selector_Qualifier*)&rhs)->name();
       }
       else if (typeid(*this) == typeid(Attribute_Selector)) {
-        return ((Attribute_Selector*)this)->name() < ((Attribute_Selector*)&rhs)->name();
-        // TODO: s->matcher() and s->value() ?
+        // TODO: this should compare all attributes of a Attribute_Selector
+        // for now, just test name(), then rely on string comparisons after that
+        if (((Attribute_Selector*)this)->name() < ((Attribute_Selector*)&rhs)->name()) {
+          return true;
+        }
+        else if (((Attribute_Selector*)&rhs)->name() < ((Attribute_Selector*)this)->name()) {
+          return false;
+        }
       }
       else if (typeid(*this) == typeid(Pseudo_Selector)) {
-        return ((Pseudo_Selector*)this)->name() < ((Pseudo_Selector*)&rhs)->name();
-        // TODO: s->expression() ?
+        // TODO: this should compare all attributes of a Pseudo_Selector
+        // for now, just test name(), then rely on string comparisons after that
+        if (((Pseudo_Selector*)this)->name() < ((Pseudo_Selector*)&rhs)->name()) {
+          return true;
+        }
+        else if (((Pseudo_Selector*)&rhs)->name() < ((Pseudo_Selector*)this)->name()) {
+          return false;
+        }
       }
       else if (typeid(*this) == typeid(Wrapped_Selector)) {
-        return ((Wrapped_Selector*)this)->name() < ((Wrapped_Selector*)&rhs)->name();
+        // TODO: this should compare all attributes of a Wrapped_Selector
+        // for now, just test name(), then rely on string comparisons after that
+        if (((Wrapped_Selector*)this)->name() < ((Wrapped_Selector*)&rhs)->name()) {
+          return true;
+        }
+        else if (((Wrapped_Selector*)&rhs)->name() < ((Wrapped_Selector*)this)->name()) {
+          return false;
+        }
       }
+      else if (typeid(*this) == typeid(Selector_Schema)) {
+        // TODO: this should compare all attributes of a Selector_Schema
+        // for now, just rely on string comparisons below
+      }
+      else {
+        if (typeid(*this) == typeid(Selector_Reference)) {
+          Selector* s1 = ((Selector_Reference*)(this))->selector();
+          Selector* s2 = ((Selector_Reference*)(&rhs))->selector();
+          if (!s1 && !s2) {
+            return false;
+          }
+          else if (!s1 && s2) {
+            return true;
+          }
+          else if (s1 && !s2) {
+            return false;
+          }
+          else {
+            return &s1 < &s2;
+          }
+        }
+      }
+
       
       // TODO: if we can cover all possible selector types with the code above, then we can remove this fallback code
       Simple_Selector* pLHS = const_cast<Simple_Selector*>(this);
