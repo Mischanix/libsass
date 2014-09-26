@@ -226,44 +226,49 @@ namespace Sass {
     Contextualize contextualize(*this, &eval, &tge, &backtrace);
     Expand expand(*this, &eval, &contextualize, &tge, &backtrace);
     
+    
+    
+    Inspect inspect(this);
+    Output_Nested output_nested_debug(source_comments, this);
+    
+
+
 
     root = root->perform(&expand)->block();
+//		cerr << "###################### AFTER EXPAND" << endl;
+//    output_nested_debug.clear_buffer();
+//    root->perform(&output_nested_debug);
+//    cerr << output_nested_debug.get_buffer() << endl;
+//		cerr << "###################### AFTER EXPAND" << endl;
+
 
 
 
     root = Sass::Util::bubbleMediaQueriesTopLevel(root, *this);
-
-
-
-    Inspect inspect(this);
-    Output_Nested output_nested_debug(source_comments, this);
-
-
 //		cerr << "###################### AFTER BUBBLE" << endl;
 //    output_nested_debug.clear_buffer();
 //    root->perform(&output_nested_debug);
 //    cerr << output_nested_debug.get_buffer() << endl;
 //		cerr << "###################### AFTER BUBBLE" << endl;
+
+
 
 
     if (!subset_map.empty()) {
       Extend extend(*this, subset_map);
       root->perform(&extend);
     }
-    
-    
 //		cerr << "###################### AFTER EXTEND" << endl;
 //    output_nested_debug.clear_buffer();
 //    root->perform(&output_nested_debug);
 //    cerr << output_nested_debug.get_buffer() << endl;
 //		cerr << "###################### AFTER EXTEND" << endl;
+    
+    
     
 
     Remove_Placeholders remove_placeholders(*this);
     root->perform(&remove_placeholders);
-    
-    
-    
 //		cerr << "###################### AFTER REMOVE PLACEHOLDERS" << endl;
 //    output_nested_debug.clear_buffer();
 //    root->perform(&output_nested_debug);
@@ -271,6 +276,7 @@ namespace Sass {
 //		cerr << "###################### AFTER REMOVE PLACEHOLDERS" << endl;
     
     
+
 
     char* result = 0;
     switch (output_style) {

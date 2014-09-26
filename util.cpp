@@ -18,6 +18,9 @@ namespace Sass {
     }
 
     bool isPrintable(Ruleset* r) {
+      if (r == NULL) {
+        return false;
+      }
 
       Block* b = r->block();
       
@@ -50,6 +53,9 @@ namespace Sass {
     }
 
     bool isPrintable(Media_Block* m) {
+      if (m == NULL) {
+        return false;
+      }
   
       Block* b = m->block();
 
@@ -84,6 +90,9 @@ namespace Sass {
     }
 
     bool isPrintable(Block* b) {
+      if (b == NULL) {
+        return false;
+      }
 
       for (size_t i = 0, L = b->length(); i < L; ++i) {
         Statement* stm = (*b)[i];
@@ -190,7 +199,15 @@ namespace Sass {
 
           Has_Block* pStmHasBlock = (Has_Block*) pStm;
           Block* pChildBlock = pStmHasBlock->block();
-          Block* pNewStmBlock = bubbleMediaQueries(pChildBlock, queryStack, bubbledBlocks, ctx);
+          
+          
+          Block* pNewStmBlock = NULL;
+					if (typeid(*pStm) == typeid(Ruleset)) {
+	          pNewStmBlock = bubbleMediaQueries(pChildBlock, queryStack, bubbledBlocks, ctx);
+          } else {
+          	pNewStmBlock = bubbleMediaQueriesTopLevel(pChildBlock, ctx);
+          }
+
           pStmHasBlock->block(pNewStmBlock);
 
           *pNewBlock << pStm;
