@@ -206,152 +206,6 @@ namespace Sass {
   void register_built_in_functions(Context&, Env* env);
   void register_c_functions(Context&, Env* env, Sass_C_Function_Descriptor*);
   void register_c_function(Context&, Env* env, Sass_C_Function_Descriptor);
-  
-  
-
-  typedef deque<List*> MediaQueryStack;
-  typedef deque<Media_Block*> MediaBlocks;
-  
-  static List* createCombinedMediaQueries(MediaQueryStack& queryStack, Context& ctx) {
-  	// TODO: should we get source and position from the front of back of the stack?
-    List* pLastList = queryStack.back();
-
-  	List* pCombined = new (ctx.mem) List(pLastList->path(), pLastList->position());
-    Media_Query* pCombinedQuery = new (ctx.mem) Media_Query(pLastList->path(), pLastList->position());
-    (*pCombined) << pCombinedQuery;
-    
-    Media_Query* pCopyFromFirst = dynamic_cast<Media_Query*>((*queryStack.front())[0]);
-    pCombinedQuery->media_type(pCopyFromFirst->media_type());
-    pCombinedQuery->is_negated(pCopyFromFirst->is_negated());
-    pCombinedQuery->is_restricted(pCopyFromFirst->is_restricted());
-    
-    /*
-    Media_Query* qq = new (ctx.mem) Media_Query(q->path(),
-                                                q->position(),
-                                                t,
-                                                q->length(),
-                                                q->is_negated(),
-                                                q->is_restricted());*/
-    
-    //List* pCombined = queryStack.front();
-    //queryStack.pop_front();
-    
-    //Media_Query* pCombinedQuery = dynamic_cast<Media_Query*>((*pCombined)[0]);
-    
-    // TODO: are there other parts of the media query that need to be merged?
-    
-    for (MediaQueryStack::iterator iter = queryStack.begin(), iterEnd = queryStack.end(); iter != iterEnd; iter++) {
-    	List* pNextList = *iter;
-      
-      for (size_t i = 0, L = pNextList->length(); i < L; ++i) {
-      	Media_Query* pMediaQuery = dynamic_cast<Media_Query*>((*pNextList)[i]);
-        
-      	for (size_t i = 0, L = pMediaQuery->length(); i < L; ++i) {
-      		*pCombinedQuery << (*pMediaQuery)[i];
-        }
-      }
-    }
-
-  	return pCombined;
-  }
-  
-  static Block* bubbleMediaQueries(Block* pBlock, MediaQueryStack& queryStack, MediaBlocks& bubbledBlocks, Context& ctx) {
-  	if (pBlock == NULL) {
-    	return pBlock;
-    }
-
-		Block* pNewBlock = new (ctx.mem) Block(pBlock->path(), pBlock->position(), pBlock->length(), pBlock->is_root());
-
-    for (size_t i = 0, L = pBlock->length(); i < L; ++i) {
-      Statement* pStm = (*pBlock)[i];
-
-      if (typeid(*pStm) == typeid(Media_Block)) {
-
-        Media_Block* pChildMediaBlock = dynamic_cast<Media_Block*>(pStm);
-
-        queryStack.push_back(pChildMediaBlock->media_queries());
-        
-				pChildMediaBlock->media_queries(createCombinedMediaQueries(queryStack, ctx));
-        
-        bubbledBlocks.push_back(pChildMediaBlock);
-        
-        // Purposefully don't push the block onto the new block. It's going to be returned in bubbledBlocks instead
-        
-        Block* pNewChildMediaBlockBlock = bubbleMediaQueries(pChildMediaBlock->block(), queryStack, bubbledBlocks, ctx);
-        pChildMediaBlock->block(pNewChildMediaBlockBlock);
-        
-        queryStack.pop_back();
-
-      } else if (dynamic_cast<Has_Block*>(pStm)) {
-
-				Has_Block* pStmHasBlock = (Has_Block*) pStm;
-        Block* pChildBlock = pStmHasBlock->block();
-        Block* pNewStmBlock = bubbleMediaQueries(pChildBlock, queryStack, bubbledBlocks, ctx);
-        pStmHasBlock->block(pNewStmBlock);
-
-        *pNewBlock << pStm;
-
-      } else {
-      
-      	*pNewBlock << pStm;
-      
-      }
-    }
-    
-    return pNewBlock;
-  
-  }
-
-	static Block* bubbleMediaQueries(Block*& pBlock, Context& ctx) {
-  	if (pBlock == NULL) {
-    	return pBlock;
-    }
-
-  
-  	Block* pNewBlock = new (ctx.mem) Block(pBlock->path(), pBlock->position(), pBlock->length(), pBlock->is_root());
-    
-    for (size_t i = 0, L = pBlock->length(); i < L; ++i) {
-      Statement* pStm = (*pBlock)[i];
-
-      if (dynamic_cast<Has_Block*>(pStm)) {
-
-				Has_Block* pStmHasBlock = (Has_Block*) pStm;
-        Block* pChildBlock = ((Has_Block*) pStm)->block();
-
-        MediaQueryStack queryStack;
-        MediaBlocks bubbledBlocks;
-        
-        if (typeid(*pStm) == typeid(Media_Block)) {
-        	Media_Block* pChildMediaBlock = dynamic_cast<Media_Block*>(pStm);
-        	queryStack.push_back(pChildMediaBlock->media_queries());
-        }
-        
-        Block* pNewStmBlock = bubbleMediaQueries(pChildBlock, queryStack, bubbledBlocks, ctx);
-        pStmHasBlock->block(pNewStmBlock);
-        
-        // Add our new Media_Block*s after this statement
-
-        *pNewBlock << pStm;
-
-        for (MediaBlocks::iterator iter = bubbledBlocks.begin(), iterEnd = bubbledBlocks.end(); iter != iterEnd; iter++) {
-        	*pNewBlock << *iter;
-        }
-        
-        if (typeid(*pStm) == typeid(Media_Block)) {
-        	queryStack.pop_back();
-        }
-
-      } else {
-
-      	*pNewBlock << pStm;
-
-      }
-    }
-    
-    return pNewBlock;
-  }
-  
-  
 
   char* Context::compile_file()
   {
@@ -377,27 +231,46 @@ namespace Sass {
 
 
 
-    root = bubbleMediaQueries(root, *this);
-    //Sass::Util::bubbleMediaQueries(root, *this);
+    root = Sass::Util::bubbleMediaQueriesTopLevel(root, *this);
 
 
-		/*
+
     Inspect inspect(this);
     Output_Nested output_nested_debug(source_comments, this);
-    root->perform(&output_nested_debug);
-    cerr << output_nested_debug.get_buffer() << endl;
-    return 0;
-    */
 
+
+//		cerr << "###################### AFTER BUBBLE" << endl;
+//    output_nested_debug.clear_buffer();
+//    root->perform(&output_nested_debug);
+//    cerr << output_nested_debug.get_buffer() << endl;
+//		cerr << "###################### AFTER BUBBLE" << endl;
 
 
     if (!subset_map.empty()) {
       Extend extend(*this, subset_map);
       root->perform(&extend);
     }
+    
+    
+//		cerr << "###################### AFTER EXTEND" << endl;
+//    output_nested_debug.clear_buffer();
+//    root->perform(&output_nested_debug);
+//    cerr << output_nested_debug.get_buffer() << endl;
+//		cerr << "###################### AFTER EXTEND" << endl;
+    
 
     Remove_Placeholders remove_placeholders(*this);
     root->perform(&remove_placeholders);
+    
+    
+    
+//		cerr << "###################### AFTER REMOVE PLACEHOLDERS" << endl;
+//    output_nested_debug.clear_buffer();
+//    root->perform(&output_nested_debug);
+//    cerr << output_nested_debug.get_buffer() << endl;
+//		cerr << "###################### AFTER REMOVE PLACEHOLDERS" << endl;
+    
+    
 
     char* result = 0;
     switch (output_style) {

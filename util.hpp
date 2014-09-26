@@ -13,7 +13,7 @@ namespace Sass {
 
     bool containsAnyPrintableStatements(Block* b);
 
-		void bubbleMediaQueries(Block*& b, Context& ctx);
+    Block* bubbleMediaQueriesTopLevel(Block* pBlock, Context& ctx);
     
     bool isPrintable(Ruleset* r);
     bool isPrintable(Media_Block* r);

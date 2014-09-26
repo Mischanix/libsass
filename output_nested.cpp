@@ -48,10 +48,8 @@ namespace Sass {
     Selector* s     = r->selector();
     Block*    b     = r->block();
     bool      decls = false;
-
-    Selector_List* sl = static_cast<Selector_List*>(s);
     
-    // JMA - filter out rulesets that aren't printable (process its children though)
+    // Filter out rulesets that aren't printable (process its children though)
     if (!Util::isPrintable(r)) {
       for (size_t i = 0, L = b->length(); i < L; ++i) {
         Statement* stm = (*b)[i];
@@ -128,8 +126,14 @@ namespace Sass {
     List*  q     = m->media_queries();
     Block* b     = m->block();
 
-    // JMA - filter out blocks that don't contain any printable statements
-    if (!Util::isPrintable(b)) {
+    // Filter out media blocks that aren't printable (process its children though)
+    if (!Util::isPrintable(m)) {
+      for (size_t i = 0, L = b->length(); i < L; ++i) {
+        Statement* stm = (*b)[i];
+        if (dynamic_cast<Has_Block*>(stm)) {
+          stm->perform(this);
+        }
+      }
       return;
     }
     

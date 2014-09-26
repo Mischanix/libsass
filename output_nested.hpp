@@ -38,6 +38,8 @@ namespace Sass {
         }
         return rendered_imports + buffer;
     }
+    
+    void clear_buffer() { buffer = ""; }
 
     // statements
     virtual void operator()(Block*);
