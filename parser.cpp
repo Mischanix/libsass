@@ -56,22 +56,22 @@ namespace Sass {
             (*root) << new (ctx.mem) Import_Stub(path, source_position, imp->files()[i]);
           }
         }
-        if (!lex< exactly<';'> >()) error("top-level @import directive must be terminated by ';'");
+        if (!lex< exactly_c<';'> >()) error("top-level @import directive must be terminated by ';'");
       }
       else if (peek< mixin >() || peek< function >()) {
         (*root) << parse_definition();
       }
       else if (peek< variable >()) {
         (*root) << parse_assignment();
-        if (!lex< exactly<';'> >()) error("top-level variable binding must be terminated by ';'");
+        if (!lex< exactly_c<';'> >()) error("top-level variable binding must be terminated by ';'");
       }
-      else if (peek< sequence< optional< exactly<'*'> >, alternatives< identifier_schema, identifier >, optional_spaces, exactly<':'>, optional_spaces, exactly<'{'> > >(position)) {
+      else if (peek< sequence< optional< exactly_c<'*'> >, alternatives< identifier_schema, identifier >, optional_spaces, exactly_c<':'>, optional_spaces, exactly_c<'{'> > >(position)) {
         (*root) << parse_propset();
       }
-      else if (peek< include >() /* || peek< exactly<'+'> >() */) {
+      else if (peek< include >() /* || peek< exactly_c<'+'> >() */) {
         Mixin_Call* mixin_call = parse_mixin_call();
         (*root) << mixin_call;
-        if (!mixin_call->block() && !lex< exactly<';'> >()) error("top-level @include directive must be terminated by ';'");
+        if (!mixin_call->block() && !lex< exactly_c<';'> >()) error("top-level @include directive must be terminated by ';'");
       }
       else if (peek< if_directive >()) {
         (*root) << parse_if_directive();
@@ -90,17 +90,17 @@ namespace Sass {
       }
       else if (peek< warn >()) {
         (*root) << parse_warning();
-        if (!lex< exactly<';'> >()) error("top-level @warn directive must be terminated by ';'");
+        if (!lex< exactly_c<';'> >()) error("top-level @warn directive must be terminated by ';'");
       }
       // ignore the @charset directive for now
       else if (lex< exactly< charset_kwd > >()) {
         lex< string_constant >();
-        lex< exactly<';'> >();
+        lex< exactly_c<';'> >();
       }
       else if (peek< at_keyword >()) {
         At_Rule* at_rule = parse_at_rule();
         (*root) << at_rule;
-        if (!at_rule->block() && !lex< exactly<';'> >()) error("top-level directive must be terminated by ';'");
+        if (!at_rule->block() && !lex< exactly_c<';'> >()) error("top-level directive must be terminated by ';'");
       }
       else if ((lookahead_result = lookahead_for_selector(position)).found) {
         (*root) << parse_ruleset(lookahead_result);
@@ -151,7 +151,7 @@ namespace Sass {
         else error("expecting another url or quoted path in @import list");
       }
       first = false;
-    } while (lex< exactly<','> >());
+    } while (lex< exactly_c<','> >());
     return imp;
   }
 
@@ -165,7 +165,7 @@ namespace Sass {
     string name(Util::normalize_underscores(lexed));
     Position source_position_of_def = source_position;
     Parameters* params = parse_parameters();
-    if (!peek< exactly<'{'> >()) error("body for " + which_str + " " + name + " must begin with a '{'");
+    if (!peek< exactly_c<'{'> >()) error("body for " + which_str + " " + name + " must begin with a '{'");
     if (which_type == Definition::MIXIN) stack.push_back(mixin_def);
     else stack.push_back(function_def);
     Block* body = parse_block();
@@ -178,13 +178,13 @@ namespace Sass {
   {
     string name(lexed); // for the error message
     Parameters* params = new (ctx.mem) Parameters(path, source_position);
-    if (lex< exactly<'('> >()) {
+    if (lex< exactly_c<'('> >()) {
       // if there's anything there at all
-      if (!peek< exactly<')'> >()) {
+      if (!peek< exactly_c<')'> >()) {
         do (*params) << parse_parameter();
-        while (lex< exactly<','> >());
+        while (lex< exactly_c<','> >());
       }
-      if (!lex< exactly<')'> >()) error("expected a variable name (e.g. $x) or ')' for the parameter list for " + name);
+      if (!lex< exactly_c<')'> >()) error("expected a variable name (e.g. $x) or ')' for the parameter list for " + name);
     }
     return params;
   }
@@ -196,7 +196,7 @@ namespace Sass {
     Position pos = source_position;
     Expression* val = 0;
     bool is_rest = false;
-    if (lex< exactly<':'> >()) { // there's a default value
+    if (lex< exactly_c<':'> >()) { // there's a default value
       val = parse_space_list();
       val->is_delayed(false);
     }
@@ -209,13 +209,13 @@ namespace Sass {
 
   Mixin_Call* Parser::parse_mixin_call()
   {
-    lex< include >() /* || lex< exactly<'+'> >() */;
+    lex< include >() /* || lex< exactly_c<'+'> >() */;
     if (!lex< identifier >()) error("invalid name in @include directive");
     Position source_position_of_call = source_position;
     string name(Util::normalize_underscores(lexed));
     Arguments* args = parse_arguments();
     Block* content = 0;
-    if (peek< exactly<'{'> >()) {
+    if (peek< exactly_c<'{'> >()) {
       content = parse_block();
     }
     Mixin_Call* the_call = new (ctx.mem) Mixin_Call(path, source_position_of_call, name, args, content);
@@ -227,13 +227,13 @@ namespace Sass {
     string name(lexed);
     Arguments* args = new (ctx.mem) Arguments(path, source_position);
 
-    if (lex< exactly<'('> >()) {
+    if (lex< exactly_c<'('> >()) {
       // if there's anything there at all
-      if (!peek< exactly<')'> >()) {
+      if (!peek< exactly_c<')'> >()) {
         do (*args) << parse_argument();
-        while (lex< exactly<','> >());
+        while (lex< exactly_c<','> >());
       }
-      if (!lex< exactly<')'> >()) error("expected a variable name (e.g. $x) or ')' for the parameter list for " + name);
+      if (!lex< exactly_c<')'> >()) error("expected a variable name (e.g. $x) or ')' for the parameter list for " + name);
     }
 
     return args;
@@ -242,11 +242,11 @@ namespace Sass {
   Argument* Parser::parse_argument()
   {
     Argument* arg;
-    if (peek< sequence < variable, spaces_and_comments, exactly<':'> > >()) {
+    if (peek< sequence < variable, spaces_and_comments, exactly_c<':'> > >()) {
       lex< variable >();
       string name(Util::normalize_underscores(lexed));
       Position p = source_position;
-      lex< exactly<':'> >();
+      lex< exactly_c<':'> >();
       Expression* val = parse_space_list();
       val->is_delayed(false);
       arg = new (ctx.mem) Argument(path, p, val, name);
@@ -268,7 +268,7 @@ namespace Sass {
     lex< variable >();
     string name(Util::normalize_underscores(lexed));
     Position var_source_position = source_position;
-    if (!lex< exactly<':'> >()) error("expected ':' after " + name + " in assignment statement");
+    if (!lex< exactly_c<':'> >()) error("expected ':' after " + name + " in assignment statement");
     Expression* val = parse_list();
     val->is_delayed(false);
     bool is_guarded = lex< default_flag >();
@@ -280,17 +280,17 @@ namespace Sass {
   Propset* Parser::parse_propset()
   {
     String* property_segment;
-    if (peek< sequence< optional< exactly<'*'> >, identifier_schema > >()) {
+    if (peek< sequence< optional< exactly_c<'*'> >, identifier_schema > >()) {
       property_segment = parse_identifier_schema();
     }
     else {
-      lex< sequence< optional< exactly<'*'> >, identifier > >();
+      lex< sequence< optional< exactly_c<'*'> >, identifier > >();
       property_segment = new (ctx.mem) String_Constant(path, source_position, lexed);
     }
     Propset* propset = new (ctx.mem) Propset(path, source_position, property_segment);
-    lex< exactly<':'> >();
+    lex< exactly_c<':'> >();
 
-    if (!peek< exactly<'{'> >()) error("expected a '{' after namespaced property");
+    if (!peek< exactly_c<'{'> >()) error("expected a '{' after namespaced property");
 
     propset->block(parse_block());
 
@@ -307,7 +307,7 @@ namespace Sass {
       sel = parse_selector_group();
     }
     Position r_source_position = source_position;
-    if (!peek< exactly<'{'> >()) error("expected a '{' after the selector");
+    if (!peek< exactly_c<'{'> >()) error("expected a '{' after the selector");
     Block* block = parse_block();
     Ruleset* ruleset = new (ctx.mem) Ruleset(path, r_source_position, sel, block);
     return ruleset;
@@ -346,10 +346,10 @@ namespace Sass {
     To_String to_string;
     Selector_List* group = new (ctx.mem) Selector_List(path, source_position);
     do {
-      if (peek< exactly<'{'> >() ||
-          peek< exactly<'}'> >() ||
-          peek< exactly<')'> >() ||
-          peek< exactly<';'> >())
+      if (peek< exactly_c<'{'> >() ||
+          peek< exactly_c<'}'> >() ||
+          peek< exactly_c<')'> >() ||
+          peek< exactly_c<';'> >())
         break; // in case there are superfluous commas at the end
       Complex_Selector* comb = parse_selector_combination();
       if (!comb->has_reference()) {
@@ -368,7 +368,7 @@ namespace Sass {
       }
       (*group) << comb;
     }
-    while (lex< one_plus< sequence< spaces_and_comments, exactly<','> > > >());
+    while (lex< one_plus< sequence< spaces_and_comments, exactly_c<','> > > >());
     while (lex< optional >());    // JMA - ignore optional flag if it follows the selector group
     return group;
   }
@@ -377,9 +377,9 @@ namespace Sass {
   {
     Position sel_source_position = Position();
     Compound_Selector* lhs;
-    if (peek< exactly<'+'> >() ||
-        peek< exactly<'~'> >() ||
-        peek< exactly<'>'> >()) {
+    if (peek< exactly_c<'+'> >() ||
+        peek< exactly_c<'~'> >() ||
+        peek< exactly_c<'>'> >()) {
       // no selector before the combinator
       lhs = 0;
     }
@@ -389,17 +389,17 @@ namespace Sass {
     }
 
     Complex_Selector::Combinator cmb;
-    if      (lex< exactly<'+'> >()) cmb = Complex_Selector::ADJACENT_TO;
-    else if (lex< exactly<'~'> >()) cmb = Complex_Selector::PRECEDES;
-    else if (lex< exactly<'>'> >()) cmb = Complex_Selector::PARENT_OF;
+    if      (lex< exactly_c<'+'> >()) cmb = Complex_Selector::ADJACENT_TO;
+    else if (lex< exactly_c<'~'> >()) cmb = Complex_Selector::PRECEDES;
+    else if (lex< exactly_c<'>'> >()) cmb = Complex_Selector::PARENT_OF;
     else                            cmb = Complex_Selector::ANCESTOR_OF;
 
     Complex_Selector* rhs;
-    if (peek< exactly<','> >() ||
-        peek< exactly<')'> >() ||
-        peek< exactly<'{'> >() ||
-        peek< exactly<'}'> >() ||
-        peek< exactly<';'> >() ||
+    if (peek< exactly_c<','> >() ||
+        peek< exactly_c<')'> >() ||
+        peek< exactly_c<'{'> >() ||
+        peek< exactly_c<'}'> >() ||
+        peek< exactly_c<';'> >() ||
         peek< optional >()) {
       // no selector after the combinator
       rhs = 0;
@@ -416,7 +416,7 @@ namespace Sass {
   {
     Compound_Selector* seq = new (ctx.mem) Compound_Selector(path, source_position);
     bool sawsomething = false;
-    if (lex< exactly<'&'> >()) {
+    if (lex< exactly_c<'&'> >()) {
       // if you see a &
       (*seq) << new (ctx.mem) Selector_Reference(path, source_position);
       sawsomething = true;
@@ -439,14 +439,14 @@ namespace Sass {
     }
 
     while (!peek< spaces >(position) &&
-           !(peek < exactly<'+'> >(position) ||
-             peek < exactly<'~'> >(position) ||
-             peek < exactly<'>'> >(position) ||
-             peek < exactly<','> >(position) ||
-             peek < exactly<')'> >(position) ||
-             peek < exactly<'{'> >(position) ||
-             peek < exactly<'}'> >(position) ||
-             peek < exactly<';'> >(position))) {
+           !(peek < exactly_c<'+'> >(position) ||
+             peek < exactly_c<'~'> >(position) ||
+             peek < exactly_c<'>'> >(position) ||
+             peek < exactly_c<','> >(position) ||
+             peek < exactly_c<')'> >(position) ||
+             peek < exactly_c<'{'> >(position) ||
+             peek < exactly_c<'}'> >(position) ||
+             peek < exactly_c<';'> >(position))) {
       (*seq) << parse_simple_selector();
     }
     return seq;
@@ -463,10 +463,10 @@ namespace Sass {
     else if (peek< pseudo_not >()) {
       return parse_negated_selector();
     }
-    else if (peek< exactly<':'> >(position) || peek< functional >()) {
+    else if (peek< exactly_c<':'> >(position) || peek< functional >()) {
       return parse_pseudo_selector();
     }
-    else if (peek< exactly<'['> >(position)) {
+    else if (peek< exactly_c<'['> >(position)) {
       return parse_attribute_selector();
     }
     else if (lex< placeholder >()) {
@@ -485,7 +485,7 @@ namespace Sass {
     string name(lexed);
     Position nsource_position = source_position;
     Selector* negated = parse_selector_group();
-    if (!lex< exactly<')'> >()) {
+    if (!lex< exactly_c<')'> >()) {
       error("negated selector is missing ')'");
     }
     return new (ctx.mem) Wrapped_Selector(path, nsource_position, name, negated);
@@ -501,7 +501,7 @@ namespace Sass {
         expr = new (ctx.mem) String_Constant(path, p, lexed);
       }
       else if (peek< binomial >(position)) {
-        lex< sequence< optional< coefficient >, exactly<'n'> > >();
+        lex< sequence< optional< coefficient >, exactly_c<'n'> > >();
         String_Constant* var_coef = new (ctx.mem) String_Constant(path, p, lexed);
         lex< sign >();
         String_Constant* op = new (ctx.mem) String_Constant(path, p, lexed);
@@ -515,31 +515,31 @@ namespace Sass {
       }
       else if (peek< sequence< optional<sign>,
                                optional<digits>,
-                               exactly<'n'>,
+                               exactly_c<'n'>,
                                spaces_and_comments,
-                               exactly<')'> > >()) {
+                               exactly_c<')'> > >()) {
         lex< sequence< optional<sign>,
                        optional<digits>,
-                       exactly<'n'> > >();
+                       exactly_c<'n'> > >();
         expr = new (ctx.mem) String_Constant(path, p, lexed);
       }
       else if (lex< sequence< optional<sign>, digits > >()) {
         expr = new (ctx.mem) String_Constant(path, p, lexed);
       }
-      else if (peek< sequence< identifier, spaces_and_comments, exactly<')'> > >()) {
+      else if (peek< sequence< identifier, spaces_and_comments, exactly_c<')'> > >()) {
         lex< identifier >();
         expr = new (ctx.mem) String_Constant(path, p, lexed);
       }
       else if (lex< string_constant >()) {
         expr = new (ctx.mem) String_Constant(path, p, lexed);
       }
-      else if (peek< exactly<')'> >()) {
+      else if (peek< exactly_c<')'> >()) {
         expr = new (ctx.mem) String_Constant(path, p, "");
       }
       else {
         wrapped = parse_selector_group();
       }
-      if (!lex< exactly<')'> >()) error("unterminated argument to " + name + "...)");
+      if (!lex< exactly_c<')'> >()) error("unterminated argument to " + name + "...)");
       if (wrapped) {
         return new (ctx.mem) Wrapped_Selector(path, p, name, wrapped);
       }
@@ -557,11 +557,11 @@ namespace Sass {
 
   Attribute_Selector* Parser::parse_attribute_selector()
   {
-    lex< exactly<'['> >();
+    lex< exactly_c<'['> >();
     Position p = source_position;
     if (!lex< attribute_name >()) error("invalid attribute name in attribute selector");
     string name(lexed);
-    if (lex< exactly<']'> >()) return new (ctx.mem) Attribute_Selector(path, p, name, "", 0);
+    if (lex< exactly_c<']'> >()) return new (ctx.mem) Attribute_Selector(path, p, name, "", 0);
     if (!lex< alternatives< exact_match, class_match, dash_match,
                             prefix_match, suffix_match, substring_match > >()) {
       error("invalid operator in attribute selector for " + name);
@@ -579,13 +579,13 @@ namespace Sass {
       error("expected a string constant or identifier in attribute selector for " + name);
     }
 
-    if (!lex< exactly<']'> >()) error("unterminated attribute selector for " + name);
+    if (!lex< exactly_c<']'> >()) error("unterminated attribute selector for " + name);
     return new (ctx.mem) Attribute_Selector(path, p, name, matcher, value);
   }
 
   Block* Parser::parse_block()
   {
-    lex< exactly<'{'> >();
+    lex< exactly_c<'{'> >();
     bool semicolon = false;
     Selector_Lookahead lookahead_result;
     Block* block = new (ctx.mem) Block(path, source_position);
@@ -597,9 +597,9 @@ namespace Sass {
       (*block) << comment;
     }
     
-    while (!lex< exactly<'}'> >()) {
+    while (!lex< exactly_c<'}'> >()) {
       if (semicolon) {
-        if (!lex< exactly<';'> >()) {
+        if (!lex< exactly_c<';'> >()) {
           error("non-terminal statement or declaration must end with ';'");
         }
         semicolon = false;
@@ -608,7 +608,7 @@ namespace Sass {
           Comment* comment  = new (ctx.mem) Comment(path, source_position, contents);
           (*block) << comment;
         }
-        if (lex< exactly<'}'> >()) break;
+        if (lex< exactly_c<'}'> >()) break;
       }
       if (lex< block_comment >()) {
         String*  contents = parse_interpolated_chunk(lexed);
@@ -673,7 +673,7 @@ namespace Sass {
         semicolon = true;
       }
       /*
-      else if (peek< exactly<'+'> >()) {
+      else if (peek< exactly_c<'+'> >()) {
         (*block) << parse_mixin_call();
         semicolon = true;
       }
@@ -693,7 +693,7 @@ namespace Sass {
       // ignore the @charset directive for now
       else if (lex< exactly< charset_kwd > >()) {
         lex< string_constant >();
-        lex< exactly<';'> >();
+        lex< exactly_c<';'> >();
       }
       else if (peek< at_keyword >()) {
         At_Rule* at_rule = parse_at_rule();
@@ -703,20 +703,20 @@ namespace Sass {
       else if ((lookahead_result = lookahead_for_selector(position)).found) {
         (*block) << parse_ruleset(lookahead_result);
       }
-      else if (peek< sequence< optional< exactly<'*'> >, alternatives< identifier_schema, identifier >, optional_spaces, exactly<':'>, optional_spaces, exactly<'{'> > >(position)) {
+      else if (peek< sequence< optional< exactly_c<'*'> >, alternatives< identifier_schema, identifier >, optional_spaces, exactly_c<':'>, optional_spaces, exactly_c<'{'> > >(position)) {
         (*block) << parse_propset();
       }
-      else if (!peek< exactly<';'> >()) {
-        if (peek< sequence< optional< exactly<'*'> >, identifier_schema, exactly<':'>, exactly<'{'> > >()) {
+      else if (!peek< exactly_c<';'> >()) {
+        if (peek< sequence< optional< exactly_c<'*'> >, identifier_schema, exactly_c<':'>, exactly_c<'{'> > >()) {
           (*block) << parse_propset();
         }
-        else if (peek< sequence< optional< exactly<'*'> >, identifier, exactly<':'>, exactly<'{'> > >()) {
+        else if (peek< sequence< optional< exactly_c<'*'> >, identifier, exactly_c<':'>, exactly_c<'{'> > >()) {
           (*block) << parse_propset();
         }
         else {
           Declaration* decl = parse_declaration();
           (*block) << decl;
-          if (peek< exactly<'{'> >()) {
+          if (peek< exactly_c<'{'> >()) {
             // parse a propset that rides on the declaration's property
             Propset* ps = new (ctx.mem) Propset(path, source_position, decl->property(), parse_block());
             (*block) << ps;
@@ -727,7 +727,7 @@ namespace Sass {
           }
         }
       }
-      else lex< exactly<';'> >();
+      else lex< exactly_c<';'> >();
       while (lex< block_comment >()) {
         String*  contents = parse_interpolated_chunk(lexed);
         Comment* comment  = new (ctx.mem) Comment(path, source_position, contents);
@@ -739,17 +739,17 @@ namespace Sass {
 
   Declaration* Parser::parse_declaration() {
     String* prop = 0;
-    if (peek< sequence< optional< exactly<'*'> >, identifier_schema > >()) {
+    if (peek< sequence< optional< exactly_c<'*'> >, identifier_schema > >()) {
       prop = parse_identifier_schema();
     }
-    else if (lex< sequence< optional< exactly<'*'> >, identifier > >()) {
+    else if (lex< sequence< optional< exactly_c<'*'> >, identifier > >()) {
       prop = new (ctx.mem) String_Constant(path, source_position, lexed);
     }
     else {
       error("invalid property name");
     }
-    if (!lex< exactly<':'> >()) error("property \"" + string(lexed) + "\" must be followed by a ':'");
-    if (peek< exactly<';'> >()) error("style declaration must contain a value");
+    if (!lex< exactly_c<':'> >()) error("property \"" + string(lexed) + "\" must be followed by a ':'");
+    if (peek< exactly_c<';'> >()) error("style declaration must contain a value");
     Expression* list = parse_list();
     return new (ctx.mem) Declaration(path, prop->position(), prop, list/*, lex<important>()*/);
   }
@@ -761,29 +761,29 @@ namespace Sass {
 
   Expression* Parser::parse_comma_list()
   {
-    if (//peek< exactly<'!'> >(position) ||
-        peek< exactly<';'> >(position) ||
-        peek< exactly<'}'> >(position) ||
-        peek< exactly<'{'> >(position) ||
-        peek< exactly<')'> >(position) ||
-        //peek< exactly<':'> >(position) ||
+    if (//peek< exactly_c<'!'> >(position) ||
+        peek< exactly_c<';'> >(position) ||
+        peek< exactly_c<'}'> >(position) ||
+        peek< exactly_c<'{'> >(position) ||
+        peek< exactly_c<')'> >(position) ||
+        //peek< exactly_c<':'> >(position) ||
         peek< exactly<ellipsis> >(position))
     { return new (ctx.mem) List(path, source_position, 0); }
     Expression* list1 = parse_space_list();
     // if it's a singleton, return it directly; don't wrap it
-    if (!peek< exactly<','> >(position)) return list1;
+    if (!peek< exactly_c<','> >(position)) return list1;
 
     List* comma_list = new (ctx.mem) List(path, source_position, 2, List::COMMA);
     (*comma_list) << list1;
 
-    while (lex< exactly<','> >())
+    while (lex< exactly_c<','> >())
     {
-      if (//peek< exactly<'!'> >(position) ||
-          peek< exactly<';'> >(position) ||
-          peek< exactly<'}'> >(position) ||
-          peek< exactly<'{'> >(position) ||
-          peek< exactly<')'> >(position) ||
-          //peek< exactly<':'> >(position) ||
+      if (//peek< exactly_c<'!'> >(position) ||
+          peek< exactly_c<';'> >(position) ||
+          peek< exactly_c<'}'> >(position) ||
+          peek< exactly_c<'{'> >(position) ||
+          peek< exactly_c<')'> >(position) ||
+          //peek< exactly_c<':'> >(position) ||
           peek< exactly<ellipsis> >(position)) {
         break;
       }
@@ -798,13 +798,13 @@ namespace Sass {
   {
     Expression* disj1 = parse_disjunction();
     // if it's a singleton, return it directly; don't wrap it
-    if (//peek< exactly<'!'> >(position) ||
-        peek< exactly<';'> >(position) ||
-        peek< exactly<'}'> >(position) ||
-        peek< exactly<'{'> >(position) ||
-        peek< exactly<')'> >(position) ||
-        peek< exactly<','> >(position) ||
-        // peek< exactly<':'> >(position) ||
+    if (//peek< exactly_c<'!'> >(position) ||
+        peek< exactly_c<';'> >(position) ||
+        peek< exactly_c<'}'> >(position) ||
+        peek< exactly_c<'{'> >(position) ||
+        peek< exactly_c<')'> >(position) ||
+        peek< exactly_c<','> >(position) ||
+        // peek< exactly_c<':'> >(position) ||
         peek< exactly<ellipsis> >(position) ||
         peek< default_flag >(position) ||
         peek< global_flag >(position))
@@ -813,13 +813,13 @@ namespace Sass {
     List* space_list = new (ctx.mem) List(path, source_position, 2, List::SPACE);
     (*space_list) << disj1;
 
-    while (!(//peek< exactly<'!'> >(position) ||
-             peek< exactly<';'> >(position) ||
-             peek< exactly<'}'> >(position) ||
-             peek< exactly<'{'> >(position) ||
-             peek< exactly<')'> >(position) ||
-             peek< exactly<','> >(position) ||
-             // peek< exactly<':'> >(position) ||
+    while (!(//peek< exactly_c<'!'> >(position) ||
+             peek< exactly_c<';'> >(position) ||
+             peek< exactly_c<'}'> >(position) ||
+             peek< exactly_c<'{'> >(position) ||
+             peek< exactly_c<')'> >(position) ||
+             peek< exactly_c<','> >(position) ||
+             // peek< exactly_c<':'> >(position) ||
              peek< exactly<ellipsis> >(position) ||
              peek< default_flag >(position) ||
              peek< global_flag >(position)))
@@ -886,14 +886,14 @@ namespace Sass {
   {
     Expression* term1 = parse_term();
     // if it's a singleton, return it directly; don't wrap it
-    if (!(peek< exactly<'+'> >(position) ||
-          peek< sequence< negate< number >, exactly<'-'> > >(position)) ||
+    if (!(peek< exactly_c<'+'> >(position) ||
+          peek< sequence< negate< number >, exactly_c<'-'> > >(position)) ||
           peek< identifier >(position))
     { return term1; }
 
     vector<Expression*> operands;
     vector<Binary_Expression::Type> operators;
-    while (lex< exactly<'+'> >() || lex< sequence< negate< number >, exactly<'-'> > >()) {
+    while (lex< exactly_c<'+'> >() || lex< sequence< negate< number >, exactly_c<'-'> > >()) {
       operators.push_back(lexed == "+" ? Binary_Expression::ADD : Binary_Expression::SUB);
       operands.push_back(parse_term());
     }
@@ -905,14 +905,14 @@ namespace Sass {
   {
     Expression* fact1 = parse_factor();
     // if it's a singleton, return it directly; don't wrap it
-    if (!(peek< exactly<'*'> >(position) ||
-          peek< exactly<'/'> >(position) ||
-          peek< exactly<'%'> >(position)))
+    if (!(peek< exactly_c<'*'> >(position) ||
+          peek< exactly_c<'/'> >(position) ||
+          peek< exactly_c<'%'> >(position)))
     { return fact1; }
 
     vector<Expression*> operands;
     vector<Binary_Expression::Type> operators;
-    while (lex< exactly<'*'> >() || lex< exactly<'/'> >() || lex< exactly<'%'> >()) {
+    while (lex< exactly_c<'*'> >() || lex< exactly_c<'/'> >() || lex< exactly_c<'%'> >()) {
       if      (lexed == "*") operators.push_back(Binary_Expression::MUL);
       else if (lexed == "/") operators.push_back(Binary_Expression::DIV);
       else                   operators.push_back(Binary_Expression::MOD);
@@ -924,9 +924,9 @@ namespace Sass {
 
   Expression* Parser::parse_factor()
   {
-    if (lex< exactly<'('> >()) {
+    if (lex< exactly_c<'('> >()) {
       Expression* value = parse_comma_list();
-      if (!lex< exactly<')'> >()) error("unclosed parenthesis");
+      if (!lex< exactly_c<')'> >()) error("unclosed parenthesis");
       value->is_delayed(false);
       // make sure wrapped lists and division expressions are non-delayed within parentheses
       if (value->concrete_type() == Expression::LIST) {
@@ -949,7 +949,7 @@ namespace Sass {
         lex< alternatives< identifier_schema, identifier > >();
         *kwd_arg << new (ctx.mem) String_Constant(path, source_position, lexed);
       }
-      lex< exactly<'='> >();
+      lex< exactly_c<'='> >();
       *kwd_arg << new (ctx.mem) String_Constant(path, source_position, lexed);
       if (lex< variable >()) *kwd_arg << new (ctx.mem) Variable(path, source_position, Util::normalize_underscores(lexed));
       else {
@@ -972,10 +972,10 @@ namespace Sass {
     else if (peek< functional >() && !peek< uri_prefix >()) {
       return parse_function_call();
     }
-    else if (lex< sequence< exactly<'+'>, spaces_and_comments, negate< number > > >()) {
+    else if (lex< sequence< exactly_c<'+'>, spaces_and_comments, negate< number > > >()) {
       return new (ctx.mem) Unary_Expression(path, source_position, Unary_Expression::PLUS, parse_factor());
     }
-    else if (lex< sequence< exactly<'-'>, spaces_and_comments, negate< number> > >()) {
+    else if (lex< sequence< exactly_c<'-'>, spaces_and_comments, negate< number> > >()) {
       return new (ctx.mem) Unary_Expression(path, source_position, Unary_Expression::MINUS, parse_factor());
     }
     else {
@@ -999,7 +999,7 @@ namespace Sass {
         lex<spaces>();
         if (peek<line_comment_prefix>() || peek<block_comment_prefix>()) error("comment in URL"); // doesn't really matter what we throw
         Expression* expr = parse_list();
-        if (!lex< exactly<')'> >()) error("dangling expression in URL"); // doesn't really matter what we throw
+        if (!lex< exactly_c<')'> >()) error("dangling expression in URL"); // doesn't really matter what we throw
         Argument* arg = new (ctx.mem) Argument(path, expr->position(), expr);
         *args << arg;
         return result;
@@ -1018,7 +1018,7 @@ namespace Sass {
       else {
         error("malformed URL");
       }
-      if (!lex< exactly<')'> >()) error("URI is missing ')'");
+      if (!lex< exactly_c<')'> >()) error("URI is missing ')'");
       return result;
     }
 
@@ -1071,7 +1071,7 @@ namespace Sass {
   {
     const char* i = chunk.begin;
     // see if there any interpolants
-    const char* p = find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(chunk.begin, chunk.end);
+    const char* p = find_first_in_interval< sequence< negate< exactly_c<'\\'> >, exactly<hash_lbrace> > >(chunk.begin, chunk.end);
     if (!p) {
       String_Constant* str_node = new (ctx.mem) String_Constant(path, source_position, chunk);
       str_node->is_delayed(true);
@@ -1081,7 +1081,7 @@ namespace Sass {
     String_Schema* schema = new (ctx.mem) String_Schema(path, source_position);
     schema->quote_mark(*chunk.begin);
     while (i < chunk.end) {
-      p = find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(i, chunk.end);
+      p = find_first_in_interval< sequence< negate< exactly_c<'\\'> >, exactly<hash_lbrace> > >(i, chunk.end);
       if (p) {
         if (i < p) {
           (*schema) << new (ctx.mem) String_Constant(path, source_position, Token(i, p)); // accumulate the preceding segment if it's nonempty
@@ -1114,7 +1114,7 @@ namespace Sass {
     return parse_interpolated_chunk(str);
     // const char* i = str.begin;
     // // see if there any interpolants
-    // const char* p = find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(str.begin, str.end);
+    // const char* p = find_first_in_interval< sequence< negate< exactly_c<'\\'> >, exactly<hash_lbrace> > >(str.begin, str.end);
     // if (!p) {
     //   String_Constant* str_node = new (ctx.mem) String_Constant(path, source_position, str);
     //   str_node->is_delayed(true);
@@ -1124,7 +1124,7 @@ namespace Sass {
     // String_Schema* schema = new (ctx.mem) String_Schema(path, source_position);
     // schema->quote_mark(*str.begin);
     // while (i < str.end) {
-    //   p = find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(i, str.end);
+    //   p = find_first_in_interval< sequence< negate< exactly_c<'\\'> >, exactly<hash_lbrace> > >(i, str.end);
     //   if (p) {
     //     if (i < p) {
     //       (*schema) << new (ctx.mem) String_Constant(path, source_position, Token(i, p)); // accumulate the preceding segment if it's nonempty
@@ -1158,7 +1158,7 @@ namespace Sass {
     --position;
     const char* i = str.begin;
     // see if there any interpolants
-    const char* p = find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(str.begin, str.end);
+    const char* p = find_first_in_interval< sequence< negate< exactly_c<'\\'> >, exactly<hash_lbrace> > >(str.begin, str.end);
     if (!p) {
       String_Constant* str_node = new (ctx.mem) String_Constant(path, source_position, str);
       str_node->is_delayed(true);
@@ -1167,7 +1167,7 @@ namespace Sass {
 
     String_Schema* schema = new (ctx.mem) String_Schema(path, source_position);
     while (i < str.end) {
-      p = find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(i, str.end);
+      p = find_first_in_interval< sequence< negate< exactly_c<'\\'> >, exactly<hash_lbrace> > >(i, str.end);
       if (p) {
         if (i < p) {
           (*schema) << new (ctx.mem) String_Constant(path, source_position, Token(i, p)); // accumulate the preceding segment if it's nonempty
@@ -1250,7 +1250,7 @@ namespace Sass {
         interp_node->is_interpolant(true);
         (*schema) << interp_node;
       }
-      else if (lex< sequence< identifier, exactly<':'> > >()) {
+      else if (lex< sequence< identifier, exactly_c<':'> > >()) {
         (*schema) << new (ctx.mem) String_Constant(path, source_position, lexed);
       }
       else if (lex< filename >()) {
@@ -1265,18 +1265,18 @@ namespace Sass {
 
   String* Parser::parse_identifier_schema()
   {
-    lex< sequence< optional< exactly<'*'> >, identifier_schema > >();
+    lex< sequence< optional< exactly_c<'*'> >, identifier_schema > >();
     Token id(lexed);
     const char* i = id.begin;
     // see if there any interpolants
-    const char* p = find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(id.begin, id.end);
+    const char* p = find_first_in_interval< sequence< negate< exactly_c<'\\'> >, exactly<hash_lbrace> > >(id.begin, id.end);
     if (!p) {
       return new (ctx.mem) String_Constant(path, source_position, id);
     }
 
     String_Schema* schema = new (ctx.mem) String_Schema(path, source_position);
     while (i < id.end) {
-      p = find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(i, id.end);
+      p = find_first_in_interval< sequence< negate< exactly_c<'\\'> >, exactly<hash_lbrace> > >(i, id.end);
       if (p) {
         if (i < p) {
           (*schema) << new (ctx.mem) String_Constant(path, source_position, Token(i, p)); // accumulate the preceding segment if it's nonempty
@@ -1307,12 +1307,12 @@ namespace Sass {
     lex< identifier >();
     string name(lexed);
     Position call_pos = source_position;
-    lex< exactly<'('> >();
+    lex< exactly_c<'('> >();
     Position arg_pos = source_position;
     const char* arg_beg = position;
     parse_list();
     const char* arg_end = position;
-    lex< exactly<')'> >();
+    lex< exactly_c<')'> >();
 
     Argument* arg = new (ctx.mem) Argument(path, arg_pos, parse_interpolated_chunk(Token(arg_beg, arg_end)));
     Arguments* args = new (ctx.mem) Arguments(path, arg_pos);
@@ -1345,7 +1345,7 @@ namespace Sass {
     Position if_source_position = source_position;
     Expression* predicate = parse_list();
     predicate->is_delayed(false);
-    if (!peek< exactly<'{'> >()) error("expected '{' after the predicate for @if");
+    if (!peek< exactly_c<'{'> >()) error("expected '{' after the predicate for @if");
     Block* consequent = parse_block();
     Block* alternative = 0;
     if (lex< else_directive >()) {
@@ -1353,7 +1353,7 @@ namespace Sass {
         alternative = new (ctx.mem) Block(path, source_position);
         (*alternative) << parse_if_directive(true);
       }
-      else if (!peek< exactly<'{'> >()) {
+      else if (!peek< exactly_c<'{'> >()) {
         error("expected '{' after @else");
       }
       else {
@@ -1378,7 +1378,7 @@ namespace Sass {
     else                  error("expected 'through' or 'to' keyword in @for directive");
     Expression* upper_bound = parse_expression();
     upper_bound->is_delayed(false);
-    if (!peek< exactly<'{'> >()) error("expected '{' after the upper bound in @for directive");
+    if (!peek< exactly_c<'{'> >()) error("expected '{' after the upper bound in @for directive");
     Block* body = parse_block();
     return new (ctx.mem) For(path, for_source_position, var, lower_bound, upper_bound, body, inclusive);
   }
@@ -1398,7 +1398,7 @@ namespace Sass {
         (*l)[i]->is_delayed(false);
       }
     }
-    if (!peek< exactly<'{'> >()) error("expected '{' after the upper bound in @each directive");
+    if (!peek< exactly_c<'{'> >()) error("expected '{' after the upper bound in @each directive");
     Block* body = parse_block();
     return new (ctx.mem) Each(path, each_source_position, var, list, body);
   }
@@ -1420,7 +1420,7 @@ namespace Sass {
 
     List* media_queries = parse_media_queries();
 
-    if (!peek< exactly<'{'> >()) {
+    if (!peek< exactly_c<'{'> >()) {
       error("expected '{' in media query");
     }
     Block* block = parse_block();
@@ -1431,8 +1431,8 @@ namespace Sass {
   List* Parser::parse_media_queries()
   {
     List* media_queries = new (ctx.mem) List(path, source_position, 0, List::COMMA);
-    if (!peek< exactly<'{'> >()) (*media_queries) << parse_media_query();
-    while (lex< exactly<','> >()) (*media_queries) << parse_media_query();
+    if (!peek< exactly_c<'{'> >()) (*media_queries) << parse_media_query();
+    while (lex< exactly_c<','> >()) (*media_queries) << parse_media_query();
     return media_queries;
   }
 
@@ -1459,19 +1459,19 @@ namespace Sass {
       String* ss = parse_identifier_schema();
       return new (ctx.mem) Media_Query_Expression(path, source_position, ss, 0, true);
     }
-    if (!lex< exactly<'('> >()) {
+    if (!lex< exactly_c<'('> >()) {
       error("media query expression must begin with '('");
     }
     Expression* feature = 0;
-    if (peek< exactly<')'> >()) {
+    if (peek< exactly_c<')'> >()) {
       error("media feature required in media query expression");
     }
     feature = parse_expression();
     Expression* expression = 0;
-    if (lex< exactly<':'> >()) {
+    if (lex< exactly_c<':'> >()) {
       expression = parse_list();
     }
-    if (!lex< exactly<')'> >()) {
+    if (!lex< exactly_c<')'> >()) {
       error("unclosed parenthesis in media query expression");
     }
     return new (ctx.mem) Media_Query_Expression(path, feature->position(), feature, expression);
@@ -1493,11 +1493,11 @@ namespace Sass {
         sel = parse_selector_group();
       }
     }
-    else if (!(peek<exactly<'{'> >() || peek<exactly<'}'> >() || peek<exactly<';'> >())) {
+    else if (!(peek<exactly_c<'{'> >() || peek<exactly_c<'}'> >() || peek<exactly_c<';'> >())) {
       val = parse_list();
     }
     Block* body = 0;
-    if (peek< exactly<'{'> >()) body = parse_block();
+    if (peek< exactly_c<'{'> >()) body = parse_block();
     At_Rule* rule = new (ctx.mem) At_Rule(path, at_source_position, kwd, sel, body);
     if (!sel) rule->value(val);
     return rule;
@@ -1525,33 +1525,33 @@ namespace Sass {
            (q = peek< percentage >(p))                             ||
            (q = peek< dimension >(p))                              ||
            (q = peek< string_constant >(p))                        ||
-           (q = peek< exactly<'*'> >(p))                           ||
-           (q = peek< exactly<'('> >(p))                           ||
-           (q = peek< exactly<')'> >(p))                           ||
-           (q = peek< exactly<'['> >(p))                           ||
-           (q = peek< exactly<']'> >(p))                           ||
-           (q = peek< exactly<'+'> >(p))                           ||
-           (q = peek< exactly<'~'> >(p))                           ||
-           (q = peek< exactly<'>'> >(p))                           ||
-           (q = peek< exactly<','> >(p))                           ||
+           (q = peek< exactly_c<'*'> >(p))                           ||
+           (q = peek< exactly_c<'('> >(p))                           ||
+           (q = peek< exactly_c<')'> >(p))                           ||
+           (q = peek< exactly_c<'['> >(p))                           ||
+           (q = peek< exactly_c<']'> >(p))                           ||
+           (q = peek< exactly_c<'+'> >(p))                           ||
+           (q = peek< exactly_c<'~'> >(p))                           ||
+           (q = peek< exactly_c<'>'> >(p))                           ||
+           (q = peek< exactly_c<','> >(p))                           ||
            (q = peek< binomial >(p))                               ||
            (q = peek< sequence< optional<sign>,
                                 optional<digits>,
-                                exactly<'n'> > >(p))               ||
+                                exactly_c<'n'> > >(p))               ||
            (q = peek< sequence< optional<sign>,
                                 digits > >(p))                     ||
            (q = peek< number >(p))                                 ||
-           (q = peek< exactly<'&'> >(p))                           ||
-           (q = peek< exactly<'%'> >(p))                           ||
+           (q = peek< exactly_c<'&'> >(p))                           ||
+           (q = peek< exactly_c<'%'> >(p))                           ||
            (q = peek< alternatives<exact_match,
                                    class_match,
                                    dash_match,
                                    prefix_match,
                                    suffix_match,
                                    substring_match> >(p))          ||
-           (q = peek< sequence< exactly<'.'>, interpolant > >(p))  ||
-           (q = peek< sequence< exactly<'#'>, interpolant > >(p))  ||
-           (q = peek< sequence< exactly<'-'>, interpolant > >(p))  ||
+           (q = peek< sequence< exactly_c<'.'>, interpolant > >(p))  ||
+           (q = peek< sequence< exactly_c<'#'>, interpolant > >(p))  ||
+           (q = peek< sequence< exactly_c<'-'>, interpolant > >(p))  ||
            (q = peek< sequence< pseudo_prefix, interpolant > >(p)) ||
            (q = peek< interpolant >(p))) {
       saw_stuff = true;
@@ -1560,7 +1560,7 @@ namespace Sass {
     }
 
     Selector_Lookahead result;
-    result.found            = saw_stuff && peek< exactly<'{'> >(p) ? p : 0;
+    result.found            = saw_stuff && peek< exactly_c<'{'> >(p) ? p : 0;
     result.has_interpolants = saw_interpolant;
 
     return result;
@@ -1581,33 +1581,33 @@ namespace Sass {
            (q = peek< percentage >(p))                             ||
            (q = peek< dimension >(p))                              ||
            (q = peek< string_constant >(p))                        ||
-           (q = peek< exactly<'*'> >(p))                           ||
-           (q = peek< exactly<'('> >(p))                           ||
-           (q = peek< exactly<')'> >(p))                           ||
-           (q = peek< exactly<'['> >(p))                           ||
-           (q = peek< exactly<']'> >(p))                           ||
-           (q = peek< exactly<'+'> >(p))                           ||
-           (q = peek< exactly<'~'> >(p))                           ||
-           (q = peek< exactly<'>'> >(p))                           ||
-           (q = peek< exactly<','> >(p))                           ||
+           (q = peek< exactly_c<'*'> >(p))                           ||
+           (q = peek< exactly_c<'('> >(p))                           ||
+           (q = peek< exactly_c<')'> >(p))                           ||
+           (q = peek< exactly_c<'['> >(p))                           ||
+           (q = peek< exactly_c<']'> >(p))                           ||
+           (q = peek< exactly_c<'+'> >(p))                           ||
+           (q = peek< exactly_c<'~'> >(p))                           ||
+           (q = peek< exactly_c<'>'> >(p))                           ||
+           (q = peek< exactly_c<','> >(p))                           ||
            (q = peek< binomial >(p))                               ||
            (q = peek< sequence< optional<sign>,
                                 optional<digits>,
-                                exactly<'n'> > >(p))               ||
+                                exactly_c<'n'> > >(p))               ||
            (q = peek< sequence< optional<sign>,
                                 digits > >(p))                     ||
            (q = peek< number >(p))                                 ||
-           (q = peek< exactly<'&'> >(p))                           ||
-           (q = peek< exactly<'%'> >(p))                           ||
+           (q = peek< exactly_c<'&'> >(p))                           ||
+           (q = peek< exactly_c<'%'> >(p))                           ||
            (q = peek< alternatives<exact_match,
                                    class_match,
                                    dash_match,
                                    prefix_match,
                                    suffix_match,
                                    substring_match> >(p))          ||
-           (q = peek< sequence< exactly<'.'>, interpolant > >(p))  ||
-           (q = peek< sequence< exactly<'#'>, interpolant > >(p))  ||
-           (q = peek< sequence< exactly<'-'>, interpolant > >(p))  ||
+           (q = peek< sequence< exactly_c<'.'>, interpolant > >(p))  ||
+           (q = peek< sequence< exactly_c<'#'>, interpolant > >(p))  ||
+           (q = peek< sequence< exactly_c<'-'>, interpolant > >(p))  ||
            (q = peek< sequence< pseudo_prefix, interpolant > >(p)) ||
            (q = peek< interpolant >(p))                            ||
            (q = peek< optional >(p))) {
@@ -1617,7 +1617,7 @@ namespace Sass {
     }
 
     Selector_Lookahead result;
-    result.found            = peek< alternatives< exactly<';'>, exactly<'}'>, exactly<'{'> > >(p) && saw_stuff ? p : 0;
+    result.found            = peek< alternatives< exactly_c<';'>, exactly_c<'}'>, exactly_c<'{'> > >(p) && saw_stuff ? p : 0;
     result.has_interpolants = saw_interpolant;
 
     return result;

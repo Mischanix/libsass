@@ -131,7 +131,7 @@ namespace Sass {
       else if (mx == spaces) {
         after_whitespace = spaces(position);
         if (after_whitespace) {
-          source_position.line += count_interval<'\n'>(position, after_whitespace);
+          source_position.line += count_interval_c<'\n'>(position, after_whitespace);
           lexed = Token(position, after_whitespace);
           return position = after_whitespace;
         }
@@ -148,7 +148,7 @@ namespace Sass {
       const char* after_token = mx(after_whitespace);
       if (after_token) {
         size_t previous_line = source_position.line;
-        source_position.line += count_interval<'\n'>(position, after_token);
+        source_position.line += count_interval_c<'\n'>(position, after_token);
 
         size_t whitespace = 0;
         const char* ptr = after_whitespace - 1;

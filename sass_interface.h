@@ -1,7 +1,6 @@
 #define SASS_INTERFACE
 
 #include "sass.h"
-#include <stdbool.h>
 #include "sass2scss/sass2scss.h"
 
 #ifdef __cplusplus
