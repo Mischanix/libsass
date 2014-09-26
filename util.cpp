@@ -5,8 +5,10 @@
 namespace Sass {
   namespace Util {
 
+
     using std::string;
-    
+
+
     string normalize_underscores(const string& str) {
       string normalized = str;
       for(size_t i = 0, L = normalized.length(); i < L; ++i) {
@@ -16,6 +18,7 @@ namespace Sass {
       }
       return normalized;
     }
+
 
     bool isPrintable(Ruleset* r) {
       if (r == NULL) {
@@ -34,14 +37,14 @@ namespace Sass {
       bool hasPrintableChildBlocks = false;
       for (size_t i = 0, L = b->length(); i < L; ++i) {
         Statement* stm = (*b)[i];
-        if (typeid(*stm) == typeid(Declaration) || typeid(*stm) == typeid(At_Rule)) {
-          hasDeclarations = true;
-        }
-        else if (dynamic_cast<Has_Block*>(stm)) {
-        	Block* pChildBlock = ((Has_Block*)stm)->block();
+
+        if (dynamic_cast<Has_Block*>(stm)) {
+          Block* pChildBlock = ((Has_Block*)stm)->block();
           if (isPrintable(pChildBlock)) {
             hasPrintableChildBlocks = true;
           }
+        } else {
+        	hasDeclarations = true;
         }
         
         if (hasDeclarations || hasPrintableChildBlocks) {
@@ -51,6 +54,7 @@ namespace Sass {
       
       return false;
     }
+
 
     bool isPrintable(Media_Block* m) {
       if (m == NULL) {
@@ -63,7 +67,7 @@ namespace Sass {
       
       bool hasDeclarations = false;
       bool hasPrintableChildBlocks = false;
-      for (size_t i = 0, L = b->length(); i < L || (hasDeclarations || hasPrintableChildBlocks); ++i) {
+      for (size_t i = 0, L = b->length(); i < L; ++i) {
         Statement* stm = (*b)[i];
         if (!stm->is_hoistable() && m->selector() != NULL && !hasSelectors) {
         	// If a statement isn't hoistable, the selectors apply to it. If there are no selectors (a selector list of length 0),
@@ -81,13 +85,14 @@ namespace Sass {
           }
         }
 
-				if (hasDeclarations || hasPrintableChildBlocks) {
-        	return true;
+        if (hasDeclarations || hasPrintableChildBlocks) {
+          return true;
         }
       }
       
       return false;
     }
+
 
     bool isPrintable(Block* b) {
       if (b == NULL) {
@@ -229,7 +234,6 @@ namespace Sass {
         return pBlock;
       }
 
-    
       Block* pNewBlock = new (ctx.mem) Block(pBlock->path(), pBlock->position(), pBlock->length(), pBlock->is_root());
       
       for (size_t i = 0, L = pBlock->length(); i < L; ++i) {
